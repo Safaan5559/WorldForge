@@ -1,11 +1,56 @@
 package com.safaan.worldforge;
-import android.app.*;import android.os.*;import android.graphics.Color;import android.view.*;import android.widget.*;import com.safaan.worldforge.engine.world.World;import com.safaan.worldforge.engine.rendering.WorldRenderer;import com.safaan.worldforge.engine.blocks.Block;
-public final class MainActivity extends Activity{
- WorldRenderer r; long seed; Block selected=Block.GRASS;
- public void onCreate(Bundle b){super.onCreate(b);getWindow().setFlags(1024,1024);seed=getPreferences(0).getLong("seed",1234567L);r=new WorldRenderer(new World(seed));FrameLayout root=new FrameLayout(this);GLView gl=new GLView();root.addView(gl);TextView cross=t("+");root.addView(cross,new FrameLayout.LayoutParams(70,70,Gravity.CENTER));
-  LinearLayout bar=new LinearLayout(this);bar.setOrientation(LinearLayout.HORIZONTAL);Block[] blocks={Block.GRASS,Block.DIRT,Block.STONE,Block.SAND,Block.WATER,Block.WOOD,Block.LEAVES,Block.GRASS};for(int i=0;i<8;i++){final Block q=blocks[i];Button x=tButton(""+(i+1));x.setOnClickListener(v->selected=q);bar.addView(x,new LinearLayout.LayoutParams(0,70,1));}FrameLayout.LayoutParams bp=new FrameLayout.LayoutParams(-1,70,Gravity.BOTTOM);bp.setMargins(150,0,150,20);root.addView(bar,bp);
-  Button jump=tButton("JUMP"),br=tButton("BREAK"),pl=tButton("PLACE");FrameLayout.LayoutParams jp=new FrameLayout.LayoutParams(150,90,Gravity.RIGHT|Gravity.BOTTOM);jp.setMargins(0,0,25,110);root.addView(jump,jp);FrameLayout.LayoutParams brp=new FrameLayout.LayoutParams(150,90,Gravity.RIGHT|Gravity.BOTTOM);brp.setMargins(0,0,185,110);root.addView(br,brp);FrameLayout.LayoutParams pp=new FrameLayout.LayoutParams(150,90,Gravity.RIGHT|Gravity.BOTTOM);pp.setMargins(0,0,345,110);root.addView(pl,pp);jump.setOnClickListener(v->r.jump());br.setOnClickListener(v->r.breakBlock());pl.setOnClickListener(v->r.placeBlock(selected));setContentView(root);}
- Button tButton(String s){Button b=new Button(this);b.setText(s);b.setTextSize(12);return b;}TextView t(String s){TextView v=new TextView(this);v.setText(s);v.setTextColor(Color.WHITE);v.setTextSize(32);v.setGravity(17);return v;}
- protected void onPause(){super.onPause();getPreferences(0).edit().putLong("seed",seed).apply();}
- final class GLView extends android.opengl.GLSurfaceView{float lx,ly;GLView(){super(MainActivity.this);setEGLContextClientVersion(2);setRenderer(r);setRenderMode(RENDERMODE_CONTINUOUSLY);setFocusable(true);}public boolean onTouchEvent(MotionEvent e){if(e.getAction()==MotionEvent.ACTION_MOVE){float dx=e.getX()-lx,dy=e.getY()-ly;if(e.getX()>getWidth()/2)r.turn(dx,dy);else r.move(-dy/80f,dx/80f,.016f);}lx=e.getX();ly=e.getY();return true;}}
+
+import android.app.Activity;
+import android.graphics.Color;
+import android.os.Bundle;
+import android.view.Gravity;
+import android.view.MotionEvent;
+import android.widget.*;
+import com.safaan.worldforge.engine.blocks.Block;
+import com.safaan.worldforge.engine.blocks.Blocks;
+import com.safaan.worldforge.engine.rendering.WorldRenderer;
+import com.safaan.worldforge.engine.world.World;
+
+public final class MainActivity extends Activity {
+    private WorldRenderer renderer;
+    private Block selected = Blocks.HOTBAR[0];
+
+    @Override public void onCreate(Bundle state) {
+        super.onCreate(state);
+        getWindow().setFlags(1024,1024);
+        long seed=getPreferences(0).getLong("seed",1234567L);
+        renderer=new WorldRenderer(new World(seed));
+        FrameLayout root=new FrameLayout(this);
+        GLView view=new GLView(); root.addView(view,new FrameLayout.LayoutParams(-1,-1));
+        TextView cross=text("+"); FrameLayout.LayoutParams cp=new FrameLayout.LayoutParams(70,70,Gravity.CENTER); root.addView(cross,cp);
+        LinearLayout hotbar=new LinearLayout(this); hotbar.setOrientation(LinearLayout.HORIZONTAL);
+        for(int i=0;i<Blocks.HOTBAR.length;i++){
+            final Block b=Blocks.HOTBAR[i]; Button slot=button(String.valueOf(i+1));
+            slot.setOnClickListener(v->{selected=b; renderer.setSelected(b);});
+            hotbar.addView(slot,new LinearLayout.LayoutParams(0,78,1));
+        }
+        FrameLayout.LayoutParams hp=new FrameLayout.LayoutParams(-1,78,Gravity.BOTTOM); hp.setMargins(18,0,18,18); root.addView(hotbar,hp);
+        Button jump=button("JUMP"),br=button("BREAK"),pl=button("PLACE");
+        add(root,jump,Gravity.RIGHT|Gravity.BOTTOM,24,110,145,90);
+        add(root,br,Gravity.RIGHT|Gravity.BOTTOM,185,110,145,90);
+        add(root,pl,Gravity.RIGHT|Gravity.BOTTOM,346,110,145,90);
+        jump.setOnClickListener(v->renderer.jump()); br.setOnClickListener(v->renderer.breakBlock()); pl.setOnClickListener(v->renderer.placeBlock(selected));
+        Button left=button("◀"); add(root,left,Gravity.LEFT|Gravity.BOTTOM,28,112,82,82); left.setOnTouchListener((v,e)->{if(e.getAction()==MotionEvent.ACTION_DOWN||e.getAction()==MotionEvent.ACTION_MOVE)renderer.move(1,0,.016f);return true;});
+        Button right=button("▶"); add(root,right,Gravity.LEFT|Gravity.BOTTOM,122,112,82,82); right.setOnTouchListener((v,e)->{if(e.getAction()==MotionEvent.ACTION_DOWN||e.getAction()==MotionEvent.ACTION_MOVE)renderer.move(-1,0,.016f);return true;});
+        setContentView(root);
+    }
+    private void add(FrameLayout r,Button b,int gravity,int right,int bottom,int w,int h){FrameLayout.LayoutParams p=new FrameLayout.LayoutParams(w,h,gravity);p.setMargins(0,0,right,bottom);r.addView(b,p);}
+    private Button button(String s){Button b=new Button(this);b.setText(s);b.setTextSize(12);b.setAllCaps(false);return b;}
+    private TextView text(String s){TextView t=new TextView(this);t.setText(s);t.setTextColor(Color.WHITE);t.setTextSize(32);t.setGravity(Gravity.CENTER);return t;}
+    @Override protected void onPause(){super.onPause();getPreferences(0).edit().putLong("seed",renderer.world.seed()).apply();}
+    private final class GLView extends android.opengl.GLSurfaceView {
+        float lx,ly;
+        GLView(){super(MainActivity.this);setEGLContextClientVersion(2);setRenderer(renderer);setRenderMode(RENDERMODE_CONTINUOUSLY);}
+        @Override public boolean onTouchEvent(MotionEvent e){
+            float x=e.getX(),y=e.getY();
+            if(e.getAction()==MotionEvent.ACTION_DOWN){lx=x;ly=y;return true;}
+            if(e.getAction()==MotionEvent.ACTION_MOVE){float dx=x-lx,dy=y-ly;if(x>getWidth()*0.42f)renderer.turn(dx,dy);lx=x;ly=y;return true;}
+            return true;
+        }
+    }
 }
