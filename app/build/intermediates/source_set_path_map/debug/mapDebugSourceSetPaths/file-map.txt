@@ -1,0 +1,7 @@
+com.safaan.worldforge.app-pngs-0 /workspaces/WorldForge/app/build/generated/res/pngs/debug
+com.safaan.worldforge.app-resValues-1 /workspaces/WorldForge/app/build/generated/res/resValues/debug
+com.safaan.worldforge.app-packageDebugResources-2 /workspaces/WorldForge/app/build/intermediates/incremental/debug/packageDebugResources/merged.dir
+com.safaan.worldforge.app-packageDebugResources-3 /workspaces/WorldForge/app/build/intermediates/incremental/debug/packageDebugResources/stripped.dir
+com.safaan.worldforge.app-debug-4 /workspaces/WorldForge/app/build/intermediates/merged_res/debug/mergeDebugResources
+com.safaan.worldforge.app-debug-5 /workspaces/WorldForge/app/src/debug/res
+com.safaan.worldforge.app-main-6 /workspaces/WorldForge/app/src/main/res

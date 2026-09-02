@@ -26,7 +26,7 @@ public final class MainActivity extends Activity {
         LinearLayout hotbar=new LinearLayout(this); hotbar.setOrientation(LinearLayout.HORIZONTAL);
         for(int i=0;i<Blocks.HOTBAR.length;i++){
             final Block b=Blocks.HOTBAR[i]; Button slot=button(String.valueOf(i+1));
-            slot.setOnClickListener(v->{selected=b; renderer.setSelected(b);});
+            slot.setOnClickListener(v->{selected=b;});
             hotbar.addView(slot,new LinearLayout.LayoutParams(0,78,1));
         }
         FrameLayout.LayoutParams hp=new FrameLayout.LayoutParams(-1,78,Gravity.BOTTOM); hp.setMargins(18,0,18,18); root.addView(hotbar,hp);

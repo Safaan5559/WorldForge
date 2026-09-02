@@ -1,0 +1,55 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml:1:1-10:12
+INJECTED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml:1:1-10:12
+INJECTED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml:1:1-10:12
+INJECTED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml:1:1-10:12
+	package
+		INJECTED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml
+	android:versionName
+		INJECTED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml
+	android:versionCode
+		INJECTED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml
+	xmlns:android
+		ADDED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml:1:11-69
+application
+ADDED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml:2:5-9:19
+INJECTED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml:2:5-9:19
+	android:extractNativeLibs
+		INJECTED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml
+	android:supportsRtl
+		ADDED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml:2:105-131
+	android:label
+		ADDED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml:2:50-77
+	android:allowBackup
+		ADDED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml:2:78-104
+	android:theme
+		ADDED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml:2:18-49
+activity#com.safaan.worldforge.MainActivity
+ADDED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml:3:9-8:20
+	android:screenOrientation
+		ADDED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml:3:48-85
+	android:exported
+		ADDED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml:3:148-171
+	android:configChanges
+		ADDED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml:3:86-147
+	android:name
+		ADDED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml:3:19-47
+intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
+ADDED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml:4:13-7:29
+action#android.intent.action.MAIN
+ADDED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml:5:17-68
+	android:name
+		ADDED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml:5:25-66
+category#android.intent.category.LAUNCHER
+ADDED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml:6:17-76
+	android:name
+		ADDED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml:6:27-74
+uses-sdk
+INJECTED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml
+INJECTED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from /workspaces/WorldForge/app/src/main/AndroidManifest.xml

@@ -1,0 +1,46 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.safaan.worldforge"
+4    android:versionCode="1"
+5    android:versionName="0.1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="24"
+9        android:targetSdkVersion="35" />
+10
+11    <application
+11-->/workspaces/WorldForge/app/src/main/AndroidManifest.xml:2:5-9:19
+12        android:allowBackup="true"
+12-->/workspaces/WorldForge/app/src/main/AndroidManifest.xml:2:78-104
+13        android:debuggable="true"
+14        android:extractNativeLibs="false"
+15        android:label="World Forge"
+15-->/workspaces/WorldForge/app/src/main/AndroidManifest.xml:2:50-77
+16        android:supportsRtl="true"
+16-->/workspaces/WorldForge/app/src/main/AndroidManifest.xml:2:105-131
+17        android:theme="@style/AppTheme" >
+17-->/workspaces/WorldForge/app/src/main/AndroidManifest.xml:2:18-49
+18        <activity
+18-->/workspaces/WorldForge/app/src/main/AndroidManifest.xml:3:9-8:20
+19            android:name="com.safaan.worldforge.MainActivity"
+19-->/workspaces/WorldForge/app/src/main/AndroidManifest.xml:3:19-47
+20            android:configChanges="orientation|screenSize|keyboardHidden"
+20-->/workspaces/WorldForge/app/src/main/AndroidManifest.xml:3:86-147
+21            android:exported="true"
+21-->/workspaces/WorldForge/app/src/main/AndroidManifest.xml:3:148-171
+22            android:screenOrientation="landscape" >
+22-->/workspaces/WorldForge/app/src/main/AndroidManifest.xml:3:48-85
+23            <intent-filter>
+23-->/workspaces/WorldForge/app/src/main/AndroidManifest.xml:4:13-7:29
+24                <action android:name="android.intent.action.MAIN" />
+24-->/workspaces/WorldForge/app/src/main/AndroidManifest.xml:5:17-68
+24-->/workspaces/WorldForge/app/src/main/AndroidManifest.xml:5:25-66
+25
+26                <category android:name="android.intent.category.LAUNCHER" />
+26-->/workspaces/WorldForge/app/src/main/AndroidManifest.xml:6:17-76
+26-->/workspaces/WorldForge/app/src/main/AndroidManifest.xml:6:27-74
+27            </intent-filter>
+28        </activity>
+29    </application>
+30
+31</manifest>
