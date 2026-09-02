@@ -1,56 +1,26 @@
 package com.safaan.worldforge;
 
-import android.app.Activity;
-import android.graphics.Color;
-import android.os.Bundle;
-import android.view.Gravity;
-import android.view.MotionEvent;
-import android.widget.*;
-import com.safaan.worldforge.engine.blocks.Block;
-import com.safaan.worldforge.engine.blocks.Blocks;
-import com.safaan.worldforge.engine.rendering.WorldRenderer;
-import com.safaan.worldforge.engine.world.World;
+import android.app.*;import android.os.*;import android.graphics.Color;import android.view.*;import android.widget.*;import java.io.*;import java.util.*;
+import com.safaan.worldforge.engine.blocks.*;import com.safaan.worldforge.engine.rendering.WorldRenderer;import com.safaan.worldforge.engine.world.World;
 
-public final class MainActivity extends Activity {
-    private WorldRenderer renderer;
-    private Block selected = Blocks.HOTBAR[0];
-
-    @Override public void onCreate(Bundle state) {
-        super.onCreate(state);
-        getWindow().setFlags(1024,1024);
-        long seed=getPreferences(0).getLong("seed",1234567L);
-        renderer=new WorldRenderer(new World(seed));
-        FrameLayout root=new FrameLayout(this);
-        GLView view=new GLView(); root.addView(view,new FrameLayout.LayoutParams(-1,-1));
-        TextView cross=text("+"); FrameLayout.LayoutParams cp=new FrameLayout.LayoutParams(70,70,Gravity.CENTER); root.addView(cross,cp);
-        LinearLayout hotbar=new LinearLayout(this); hotbar.setOrientation(LinearLayout.HORIZONTAL);
-        for(int i=0;i<Blocks.HOTBAR.length;i++){
-            final Block b=Blocks.HOTBAR[i]; Button slot=button(String.valueOf(i+1));
-            slot.setOnClickListener(v->{selected=b;});
-            hotbar.addView(slot,new LinearLayout.LayoutParams(0,78,1));
-        }
-        FrameLayout.LayoutParams hp=new FrameLayout.LayoutParams(-1,78,Gravity.BOTTOM); hp.setMargins(18,0,18,18); root.addView(hotbar,hp);
-        Button jump=button("JUMP"),br=button("BREAK"),pl=button("PLACE");
-        add(root,jump,Gravity.RIGHT|Gravity.BOTTOM,24,110,145,90);
-        add(root,br,Gravity.RIGHT|Gravity.BOTTOM,185,110,145,90);
-        add(root,pl,Gravity.RIGHT|Gravity.BOTTOM,346,110,145,90);
-        jump.setOnClickListener(v->renderer.jump()); br.setOnClickListener(v->renderer.breakBlock()); pl.setOnClickListener(v->renderer.placeBlock(selected));
-        Button left=button("◀"); add(root,left,Gravity.LEFT|Gravity.BOTTOM,28,112,82,82); left.setOnTouchListener((v,e)->{if(e.getAction()==MotionEvent.ACTION_DOWN||e.getAction()==MotionEvent.ACTION_MOVE)renderer.move(1,0,.016f);return true;});
-        Button right=button("▶"); add(root,right,Gravity.LEFT|Gravity.BOTTOM,122,112,82,82); right.setOnTouchListener((v,e)->{if(e.getAction()==MotionEvent.ACTION_DOWN||e.getAction()==MotionEvent.ACTION_MOVE)renderer.move(-1,0,.016f);return true;});
-        setContentView(root);
-    }
-    private void add(FrameLayout r,Button b,int gravity,int right,int bottom,int w,int h){FrameLayout.LayoutParams p=new FrameLayout.LayoutParams(w,h,gravity);p.setMargins(0,0,right,bottom);r.addView(b,p);}
-    private Button button(String s){Button b=new Button(this);b.setText(s);b.setTextSize(12);b.setAllCaps(false);return b;}
-    private TextView text(String s){TextView t=new TextView(this);t.setText(s);t.setTextColor(Color.WHITE);t.setTextSize(32);t.setGravity(Gravity.CENTER);return t;}
-    @Override protected void onPause(){super.onPause();getPreferences(0).edit().putLong("seed",renderer.world.seed()).apply();}
-    private final class GLView extends android.opengl.GLSurfaceView {
-        float lx,ly;
-        GLView(){super(MainActivity.this);setEGLContextClientVersion(2);setRenderer(renderer);setRenderMode(RENDERMODE_CONTINUOUSLY);}
-        @Override public boolean onTouchEvent(MotionEvent e){
-            float x=e.getX(),y=e.getY();
-            if(e.getAction()==MotionEvent.ACTION_DOWN){lx=x;ly=y;return true;}
-            if(e.getAction()==MotionEvent.ACTION_MOVE){float dx=x-lx,dy=y-ly;if(x>getWidth()*0.42f)renderer.turn(dx,dy);lx=x;ly=y;return true;}
-            return true;
-        }
-    }
+/** Main Android shell: menu, mobile HUD, controls and persistence. */
+public final class MainActivity extends Activity{
+ private WorldRenderer renderer;private Block selected=Block.GRASS;private final Block[] inventory=Blocks.HOTBAR.clone();private TextView status;private boolean running;
+ private File saveFile(){return new File(getFilesDir(),"worldforge.wld");}
+ @Override public void onCreate(Bundle b){super.onCreate(b);getWindow().setFlags(1024,1024);showMenu();}
+ private void showMenu(){LinearLayout box=new LinearLayout(this);box.setOrientation(LinearLayout.VERTICAL);box.setGravity(Gravity.CENTER);box.setPadding(60,30,60,30);box.setBackgroundColor(Color.rgb(25,32,38));TextView title=label("WORLD FORGE",36);box.addView(title,new LinearLayout.LayoutParams(-1,110));Button play=button("PLAY"),create=button("CREATE WORLD"),settings=button("SETTINGS");box.addView(play,new LinearLayout.LayoutParams(-1,85));box.addView(create,new LinearLayout.LayoutParams(-1,85));box.addView(settings,new LinearLayout.LayoutParams(-1,85));play.setOnClickListener(v->startWorld(false));create.setOnClickListener(v->startWorld(true));settings.setOnClickListener(v->showSettings());setContentView(box);}
+ private void startWorld(boolean fresh){long seed;World.SaveData data=null;if(fresh||!saveFile().exists())seed=new Random().nextLong();else{try{data=World.load(saveFile());seed=data.seed;}catch(Exception e){seed=1234567L;}}renderer=new WorldRenderer(new World(seed));if(data!=null){renderer.x=data.x;renderer.y=data.y;renderer.z=data.z;renderer.yaw=data.yaw;renderer.pitch=data.pitch;renderer.world.apply(data);if(data.inventory!=null)System.arraycopy(data.inventory,0,inventory,0,Math.min(inventory.length,data.inventory.length));if(data.selected>=0&&data.selected<inventory.length)selected=inventory[data.selected];}running=true;buildGame();}
+ private void buildGame(){FrameLayout root=new FrameLayout(this);GameView view=new GameView();root.addView(view,new FrameLayout.LayoutParams(-1,-1));TextView cross=label("+",28);root.addView(cross,new FrameLayout.LayoutParams(70,70,Gravity.CENTER));status=label("",14);FrameLayout.LayoutParams sp=new FrameLayout.LayoutParams(-2,55,Gravity.TOP|Gravity.LEFT);sp.setMargins(18,12,0,0);root.addView(status,sp);
+  Button jump=button("JUMP"),br=button("BREAK"),pl=button("PLACE"),inv=button("INV");add(root,jump,Gravity.RIGHT|Gravity.BOTTOM,20,118,125,76);add(root,br,Gravity.RIGHT|Gravity.BOTTOM,155,118,125,76);add(root,pl,Gravity.RIGHT|Gravity.BOTTOM,290,118,125,76);add(root,inv,Gravity.RIGHT|Gravity.TOP,18,18,90,62);jump.setOnClickListener(v->renderer.jump());br.setOnClickListener(v->renderer.breakBlock());pl.setOnClickListener(v->renderer.placeBlock(selected));inv.setOnClickListener(v->showInventory());
+  LinearLayout hot=new LinearLayout(this);hot.setOrientation(LinearLayout.HORIZONTAL);for(int i=0;i<inventory.length;i++){final int n=i;Button s=button(""+(i+1));s.setOnClickListener(v->{selected=inventory[n];updateStatus();});hot.addView(s,new LinearLayout.LayoutParams(0,70,1));}FrameLayout.LayoutParams hp=new FrameLayout.LayoutParams(-1,70,Gravity.BOTTOM);hp.setMargins(18,0,18,18);root.addView(hot,hp);setContentView(root);updateStatus();}
+ private void showInventory(){String[] names=new String[inventory.length];for(int i=0;i<names.length;i++)names[i]=(i+1)+"  "+inventory[i].name();new AlertDialog.Builder(this).setTitle("Inventory").setItems(names,(d,w)->{selected=inventory[w];updateStatus();}).setNegativeButton("CLOSE",null).show();}
+ private void showSettings(){new AlertDialog.Builder(this).setTitle("World Forge Settings").setMessage("OpenGL ES 2 renderer\n10-chunk view distance\nTouch camera and movement\nAutomatic world saving").setPositiveButton("OK",null).show();}
+ private void updateStatus(){if(status!=null)status.setText("♥ 100    "+selected.name());}
+ private void add(FrameLayout r,View v,int gravity,int margin,int bottom,int w,int h){FrameLayout.LayoutParams p=new FrameLayout.LayoutParams(w,h,gravity);p.setMargins(margin,0,0,bottom);r.addView(v,p);}
+ private Button button(String s){Button b=new Button(this);b.setText(s);b.setTextSize(12);b.setAllCaps(false);return b;}private TextView label(String s,int z){TextView t=new TextView(this);t.setText(s);t.setTextSize(z);t.setTextColor(Color.WHITE);t.setGravity(Gravity.CENTER);return t;}
+ @Override protected void onPause(){super.onPause();if(running&&renderer!=null)save();}
+ private void save(){try{int sel=0;for(int i=0;i<inventory.length;i++)if(inventory[i]==selected)sel=i;renderer.world.save(saveFile(),renderer.x,renderer.y,renderer.z,renderer.yaw,renderer.pitch,inventory,sel);}catch(Exception ignored){}}
+ private final class GameView extends android.opengl.GLSurfaceView{float lx,ly;boolean moving;GameView(){super(MainActivity.this);setEGLContextClientVersion(2);setRenderer(renderer);setRenderMode(RENDERMODE_CONTINUOUSLY);}
+  @Override public boolean onTouchEvent(MotionEvent e){float tx=e.getX(),ty=e.getY();int a=e.getActionMasked();if(a==MotionEvent.ACTION_DOWN){lx=tx;ly=ty;moving=tx<getWidth()*.42f;return true;}if(a==MotionEvent.ACTION_MOVE){float dx=tx-lx,dy=ty-ly;if(moving){float sx=Math.max(-1,Math.min(1,(tx-getWidth()*.20f)/(getWidth()*.20f)));float f=Math.max(-1,Math.min(1,(getHeight()*.70f-ty)/(getHeight()*.35f)));renderer.setInput(f,sx);}else renderer.turn(dx,dy);lx=tx;ly=ty;return true;}if(a==MotionEvent.ACTION_UP||a==MotionEvent.ACTION_CANCEL){if(moving)renderer.setInput(0,0);return true;}return true;}
+ }
 }
