@@ -1,80 +1,28 @@
 package com.safaan.worldforge.engine.rendering;
 
-import android.opengl.GLES20;
-import android.opengl.GLSurfaceView;
-import android.opengl.Matrix;
-import com.safaan.worldforge.engine.blocks.Block;
-import com.safaan.worldforge.engine.world.World;
-import java.nio.*;
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL10;
+import android.opengl.GLES20;import android.opengl.GLSurfaceView;import android.opengl.Matrix;
+import com.safaan.worldforge.engine.blocks.Block;import com.safaan.worldforge.engine.world.World;import java.nio.*;import javax.microedition.khronos.egl.EGLConfig;import javax.microedition.khronos.opengles.GL10;
 
-public final class WorldRenderer implements GLSurfaceView.Renderer {
- public final World world; public float x=8,y,z=8,yaw,pitch=-8; public boolean sprint;
- private float vy,inputF,inputS; private boolean grounded=true,dirty=true;
- private int program,pa,ca,mu,meshCx=Integer.MIN_VALUE,meshCz=Integer.MIN_VALUE,vertexCount;
- private FloatBuffer vertices,colors; private long lastNs;
- private final float[] projection=new float[16],view=new float[16],vp=new float[16];
-
+public final class WorldRenderer implements GLSurfaceView.Renderer{
+ public final World world;public float x=8,y,z=8,yaw,pitch=-8;public boolean sprint;
+ private float vy,inputF,inputS;private boolean grounded=true,dirty=true;private int program,pa,ca,mu,meshX=Integer.MIN_VALUE,meshZ=Integer.MIN_VALUE,vertexCount;private FloatBuffer vertices,colors;private long lastNs;
+ private final float[]projection=new float[16],view=new float[16],vp=new float[16];
  public WorldRenderer(World w){world=w;y=world.surfaceY(8,8)+1.01f;}
- public void turn(float dx,float dy){yaw=(yaw+dx*.16f)%360f;pitch=Math.max(-88,Math.min(88,pitch+dy*.16f));}
+ public void turn(float dx,float dy){yaw=(yaw+dx*.16f)%360f;if(yaw<0)yaw+=360f;pitch=Math.max(-89,Math.min(89,pitch+dy*.16f));}
  public void setInput(float f,float s){inputF=Math.max(-1,Math.min(1,f));inputS=Math.max(-1,Math.min(1,s));}
  public void setSprint(boolean s){sprint=s;}
  public void jump(){if(grounded){vy=6.3f;grounded=false;}}
- private boolean collides(float px,float py,float pz){
-  float r=.28f,h=1.8f;int ax=(int)Math.floor(px-r),bx=(int)Math.floor(px+r),ay=(int)Math.floor(py),by=(int)Math.floor(py+h),az=(int)Math.floor(pz-r),bz=(int)Math.floor(pz+r);
-  for(int X=ax;X<=bx;X++)for(int Y=ay;Y<=by;Y++)for(int Z=az;Z<=bz;Z++)if(world.solid(X,Y,Z))return true; return false;
- }
- private void move(float dx,float dy,float dz){
-  if(dx!=0&&!collides(x+dx,y,z))x+=dx;if(dz!=0&&!collides(x,y,z+dz))z+=dz;
-  if(dy!=0){if(!collides(x,y+dy,z)){y+=dy;grounded=false;}else{if(dy<0)grounded=true;vy=0;}}
- }
- public void update(float dt){
-  dt=Math.min(.05f,Math.max(0,dt));double a=Math.toRadians(yaw);float speed=sprint?6.2f:4.2f;
-  float fx=(float)Math.sin(a),fz=(float)Math.cos(a),sx=(float)Math.cos(a),sz=-(float)Math.sin(a);
-  float len=(float)Math.sqrt(inputF*inputF+inputS*inputS),scale=len>1?1/len:1;
-  move((fx*inputF+sx*inputS)*scale*speed*dt,0,(fz*inputF+sz*inputS)*scale*speed*dt);
-  vy-=18*dt;move(0,vy*dt,0);if(y<1){y=1;vy=0;grounded=true;}world.tick();
- }
+ private boolean collides(float px,float py,float pz){float r=.28f,h=1.8f;int ax=(int)Math.floor(px-r),bx=(int)Math.floor(px+r),ay=(int)Math.floor(py),by=(int)Math.floor(py+h),az=(int)Math.floor(pz-r),bz=(int)Math.floor(pz+r);for(int X=ax;X<=bx;X++)for(int Y=ay;Y<=by;Y++)for(int Z=az;Z<=bz;Z++)if(world.solid(X,Y,Z))return true;return false;}
+ private void move(float dx,float dy,float dz){if(dx!=0&&!collides(x+dx,y,z))x+=dx;if(dz!=0&&!collides(x,y,z+dz))z+=dz;if(dy!=0){if(!collides(x,y+dy,z)){y+=dy;grounded=false;}else{if(dy<0)grounded=true;vy=0;}}}
+ public void update(float dt){dt=Math.min(.05f,Math.max(0,dt));double a=Math.toRadians(yaw);float speed=sprint?6.2f:4.2f,fx=(float)Math.sin(a),fz=(float)Math.cos(a),sx=(float)Math.cos(a),sz=-(float)Math.sin(a);float len=(float)Math.sqrt(inputF*inputF+inputS*inputS),scale=len>1?1/len:1;move((fx*inputF+sx*inputS)*scale*speed*dt,0,(fz*inputF+sz*inputS)*scale*speed*dt);vy-=18*dt;move(0,vy*dt,0);if(y<1){y=1;vy=0;grounded=true;}world.tick();}
  public void breakBlock(){int[]h=raycast();if(h!=null&&world.get(h[0],h[1],h[2])!=Block.AIR){world.set(h[0],h[1],h[2],Block.AIR);dirty=true;}}
  public void placeBlock(Block b){if(b==null||b==Block.AIR)return;int[]h=raycast();if(h==null)return;int px=h[0]+h[3],py=h[1]+h[4],pz=h[2]+h[5];if(py>=0&&py<World.HEIGHT&&world.get(px,py,pz)==Block.AIR&&!collides(px+.5f,py,pz+.5f)){world.set(px,py,pz,b);dirty=true;}}
- public int[]raycast(){
-  double a=Math.toRadians(yaw),p=Math.toRadians(pitch),dx=Math.sin(a)*Math.cos(p),dy=Math.sin(p),dz=Math.cos(a)*Math.cos(p);
-  int lx=(int)Math.floor(x),ly=(int)Math.floor(y+1.62),lz=(int)Math.floor(z);
-  for(float d=.15f;d<=8;d+=.035f){int X=(int)Math.floor(x+dx*d),Y=(int)Math.floor(y+1.62+dy*d),Z=(int)Math.floor(z+dz*d);if(world.get(X,Y,Z)!=Block.AIR)return new int[]{X,Y,Z,lx-X,ly-Y,lz-Z};lx=X;ly=Y;lz=Z;}return null;
- }
- @Override public void onSurfaceCreated(GL10 gl,EGLConfig e){
-  GLES20.glEnable(GLES20.GL_DEPTH_TEST);GLES20.glEnable(GLES20.GL_CULL_FACE);GLES20.glEnable(GLES20.GL_BLEND);GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA,GLES20.GL_ONE_MINUS_SRC_ALPHA);GLES20.glClearColor(.48f,.72f,.95f,1);
-  String vs="attribute vec3 a;attribute vec4 c;uniform mat4 m;varying vec4 v;void main(){gl_Position=m*vec4(a,1.0);v=c;}";
-  String fs="precision mediump float;varying vec4 v;void main(){gl_FragColor=v;}";
-  int s=shader(GLES20.GL_VERTEX_SHADER,vs),t=shader(GLES20.GL_FRAGMENT_SHADER,fs);program=GLES20.glCreateProgram();GLES20.glAttachShader(program,s);GLES20.glAttachShader(program,t);GLES20.glLinkProgram(program);
-  pa=GLES20.glGetAttribLocation(program,"a");ca=GLES20.glGetAttribLocation(program,"c");mu=GLES20.glGetUniformLocation(program,"m");lastNs=System.nanoTime();
- }
+ public int[]raycast(){double a=Math.toRadians(yaw),p=Math.toRadians(pitch),dx=Math.sin(a)*Math.cos(p),dy=Math.sin(p),dz=Math.cos(a)*Math.cos(p);int lx=(int)Math.floor(x),ly=(int)Math.floor(y+1.62),lz=(int)Math.floor(z);for(float d=.1f;d<=10;d+=.025f){int X=(int)Math.floor(x+dx*d),Y=(int)Math.floor(y+1.62+dy*d),Z=(int)Math.floor(z+dz*d);if(world.get(X,Y,Z)!=Block.AIR)return new int[]{X,Y,Z,lx-X,ly-Y,lz-Z};lx=X;ly=Y;lz=Z;}return null;}
+ @Override public void onSurfaceCreated(GL10 gl,EGLConfig e){GLES20.glEnable(GLES20.GL_DEPTH_TEST);GLES20.glDisable(GLES20.GL_CULL_FACE);GLES20.glEnable(GLES20.GL_BLEND);GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA,GLES20.GL_ONE_MINUS_SRC_ALPHA);GLES20.glClearColor(.48f,.72f,.95f,1);String vs="attribute vec3 a;attribute vec4 c;uniform mat4 m;varying vec4 v;void main(){gl_Position=m*vec4(a,1.0);v=c;}";String fs="precision mediump float;varying vec4 v;void main(){gl_FragColor=v;}";int s=shader(GLES20.GL_VERTEX_SHADER,vs),t=shader(GLES20.GL_FRAGMENT_SHADER,fs);program=GLES20.glCreateProgram();GLES20.glAttachShader(program,s);GLES20.glAttachShader(program,t);GLES20.glLinkProgram(program);pa=GLES20.glGetAttribLocation(program,"a");ca=GLES20.glGetAttribLocation(program,"c");mu=GLES20.glGetUniformLocation(program,"m");lastNs=System.nanoTime();}
  private int shader(int type,String src){int s=GLES20.glCreateShader(type);GLES20.glShaderSource(s,src);GLES20.glCompileShader(s);return s;}
- @Override public void onSurfaceChanged(GL10 gl,int w,int h){w=Math.max(1,w);h=Math.max(1,h);GLES20.glViewport(0,0,w,h);Matrix.perspectiveM(projection,0,70,w/(float)h,.08f,160);}
- @Override public void onDrawFrame(GL10 gl){
-  long now=System.nanoTime();float dt=(now-lastNs)/1e9f;lastNs=now;update(dt);
-  int mcx=(int)Math.floor(x/16),mcz=(int)Math.floor(z/16);if(dirty||mcx!=meshCx||mcz!=meshCz){buildMesh();dirty=false;meshCx=mcx;meshCz=mcz;}
-  GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT|GLES20.GL_DEPTH_BUFFER_BIT);
-  double a=Math.toRadians(yaw),p=Math.toRadians(pitch);float cp=(float)Math.cos(p);
-  float ex=x+(float)Math.sin(a)*cp,ey=y+1.62f+(float)Math.sin(p),ez=z+(float)Math.cos(a)*cp;
-  Matrix.setLookAtM(view,0,x,y+1.62f,z,ex,ey,ez,0,1,0);Matrix.multiplyMM(vp,0,projection,0,view,0);
-  if(vertices!=null&&vertexCount>0){GLES20.glUseProgram(program);GLES20.glUniformMatrix4fv(mu,1,false,vp,0);vertices.position(0);colors.position(0);GLES20.glVertexAttribPointer(pa,3,GLES20.GL_FLOAT,false,0,vertices);GLES20.glEnableVertexAttribArray(pa);GLES20.glVertexAttribPointer(ca,4,GLES20.GL_FLOAT,false,0,colors);GLES20.glEnableVertexAttribArray(ca);GLES20.glDrawArrays(GLES20.GL_TRIANGLES,0,vertexCount);GLES20.glDisableVertexAttribArray(pa);GLES20.glDisableVertexAttribArray(ca);}
- }
- private void buildMesh(){
-  Mesh m=new Mesh(65536);int r=7,cx=(int)Math.floor(x),cz=(int)Math.floor(z);
-  for(int bx=cx-r;bx<=cx+r;bx++)for(int bz=cz-r;bz<=cz+r;bz++)for(int by=0;by<World.HEIGHT;by++){Block b=world.get(bx,by,bz);if(b==Block.AIR)continue;for(int f=0;f<6;f++){Block n=world.get(bx+DX[f],by+DY[f],bz+DZ[f]);if(n==Block.AIR||(b==Block.WATER&&n!=Block.WATER)||(b!=Block.WATER&&n==Block.WATER))m.face(bx,by,bz,f,b);}}
-  vertices=m.vertices();colors=m.colors();vertexCount=m.vertexCount();
- }
+ @Override public void onSurfaceChanged(GL10 gl,int w,int h){w=Math.max(1,w);h=Math.max(1,h);GLES20.glViewport(0,0,w,h);Matrix.perspectiveM(projection,0,70,w/(float)h,.08f,220);}
+ @Override public void onDrawFrame(GL10 gl){long now=System.nanoTime();float dt=(now-lastNs)/1e9f;lastNs=now;update(dt);int mcx=(int)Math.floor(x/16),mcz=(int)Math.floor(z/16);if(dirty||mcx!=meshX||mcz!=meshZ){buildMesh();dirty=false;meshX=mcx;meshZ=mcz;}GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT|GLES20.GL_DEPTH_BUFFER_BIT);double a=Math.toRadians(yaw),p=Math.toRadians(pitch);float cp=(float)Math.cos(p),ex=x+(float)Math.sin(a)*cp,ey=y+1.62f+(float)Math.sin(p),ez=z+(float)Math.cos(a)*cp;Matrix.setLookAtM(view,0,x,y+1.62f,z,ex,ey,ez,0,1,0);Matrix.multiplyMM(vp,0,projection,0,view,0);if(vertices!=null&&vertexCount>0){GLES20.glUseProgram(program);GLES20.glUniformMatrix4fv(mu,1,false,vp,0);GLES20.glVertexAttribPointer(pa,3,GLES20.GL_FLOAT,false,0,vertices);GLES20.glEnableVertexAttribArray(pa);GLES20.glVertexAttribPointer(ca,4,GLES20.GL_FLOAT,false,0,colors);GLES20.glEnableVertexAttribArray(ca);GLES20.glDrawArrays(GLES20.GL_TRIANGLES,0,vertexCount);GLES20.glDisableVertexAttribArray(pa);GLES20.glDisableVertexAttribArray(ca);}}
+ private void buildMesh(){Mesh m=new Mesh(131072);int radiusChunks=6,cx=Math.floorDiv((int)Math.floor(x),16),cz=Math.floorDiv((int)Math.floor(z),16);for(int cX=cx-radiusChunks;cX<=cx+radiusChunks;cX++)for(int cZ=cz-radiusChunks;cZ<=cz+radiusChunks;cZ++){int minX=cX*16,maxX=minX+15,minZ=cZ*16,maxZ=minZ+15;for(int bx=minX;bx<=maxX;bx++)for(int bz=minZ;bz<=maxZ;bz++){int top=world.surfaceY(bx,bz);for(int by=Math.max(0,top-32);by<Math.min(World.HEIGHT,top+8);by++){Block b=world.get(bx,by,bz);if(b==Block.AIR)continue;for(int f=0;f<6;f++){Block n=world.get(bx+DX[f],by+DY[f],bz+DZ[f]);if(n==Block.AIR||(b==Block.WATER&&n!=Block.WATER)||(b!=Block.WATER&&n==Block.WATER))m.face(bx,by,bz,f,b);}}}}vertices=m.vertices();colors=m.colors();vertexCount=m.vertexCount();}
  private static final int[]DX={1,-1,0,0,0,0},DY={0,0,1,-1,0,0},DZ={0,0,0,0,1,-1};
- private static final class Mesh{
-  float[]v,c;int n;Mesh(int initial){v=new float[initial*3];c=new float[initial*4];}
-  void add(float x,float y,float z,float r,float g,float b,float a){int vi=n,ci=(n/3)*4;if(vi+3>v.length)v=java.util.Arrays.copyOf(v,Math.max(vi+3,v.length*2));if(ci+4>c.length)c=java.util.Arrays.copyOf(c,Math.max(ci+4,c.length*2));v[vi]=x;v[vi+1]=y;v[vi+2]=z;c[ci]=r;c[ci+1]=g;c[ci+2]=b;c[ci+3]=a;n+=3;}
-  void face(int x,int y,int z,int f,Block b){
-   final float[][]q={{1,0,0,1,1,0,1,1,1,1,0,1},{0,0,0,0,0,1,0,1,1,0,1,0},{0,1,0,0,1,1,1,1,1,1,1,0},{0,0,0,1,0,0,1,0,1,0,0,1},{0,0,1,1,0,1,1,1,1,0,1,1},{0,0,0,0,1,0,1,1,0,1,0,0}};final int[]t={0,1,2,0,2,3};float[]cc=color(b);float light=f==2?1f:(f==3?.55f:.78f),alpha=b==Block.WATER?.62f:1f;for(int i:t){int k=i*3;add(x+q[f][k],y+q[f][k+1],z+q[f][k+2],cc[0]*light,cc[1]*light,cc[2]*light,alpha);}
-  }
-  FloatBuffer vertices(){return buffer(java.util.Arrays.copyOf(v,n));}FloatBuffer colors(){return buffer(java.util.Arrays.copyOf(c,(n/3)*4));}int vertexCount(){return n/3;}
-  static FloatBuffer buffer(float[]a){FloatBuffer f=ByteBuffer.allocateDirect(a.length*4).order(ByteOrder.nativeOrder()).asFloatBuffer();f.put(a).position(0);return f;}
-  static float[]color(Block b){switch(b){case GRASS:return new float[]{.28f,.72f,.18f};case DIRT:return new float[]{.48f,.30f,.13f};case STONE:return new float[]{.48f,.50f,.53f};case SAND:return new float[]{.86f,.73f,.43f};case WATER:return new float[]{.08f,.38f,.82f};case WOOD:return new float[]{.48f,.27f,.10f};case LEAVES:return new float[]{.18f,.55f,.16f};default:return new float[]{0,0,0};}}
- }
+ private static final class Mesh{float[]v,c;int n;Mesh(int initial){v=new float[initial*3];c=new float[initial*4];}void add(float x,float y,float z,float r,float g,float b,float a){int vi=n,ci=(n/3)*4;if(vi+3>v.length)v=java.util.Arrays.copyOf(v,Math.max(vi+3,v.length*2));if(ci+4>c.length)c=java.util.Arrays.copyOf(c,Math.max(ci+4,c.length*2));v[vi]=x;v[vi+1]=y;v[vi+2]=z;c[ci]=r;c[ci+1]=g;c[ci+2]=b;c[ci+3]=a;n+=3;}void face(int x,int y,int z,int f,Block b){final float[][]q={{1,0,0,1,1,0,1,1,1,1,0,1},{0,0,0,0,0,1,0,1,1,0,1,0},{0,1,0,0,1,1,1,1,1,1,1,0},{0,0,0,1,0,0,1,0,1,0,0,1},{0,0,1,1,0,1,1,1,1,0,1,1},{0,0,0,0,1,0,1,1,0,1,0,0}};final int[]t={0,1,2,0,2,3};float[]cc=color(b);float light=f==2?1f:(f==3?.55f:.78f),alpha=b==Block.WATER?.62f:1f;for(int i:t){int k=i*3;add(x+q[f][k],y+q[f][k+1],z+q[f][k+2],cc[0]*light,cc[1]*light,cc[2]*light,alpha);}}FloatBuffer vertices(){return buffer(java.util.Arrays.copyOf(v,n));}FloatBuffer colors(){return buffer(java.util.Arrays.copyOf(c,(n/3)*4));}int vertexCount(){return n/3;}static FloatBuffer buffer(float[]a){FloatBuffer f=ByteBuffer.allocateDirect(a.length*4).order(ByteOrder.nativeOrder()).asFloatBuffer();f.put(a).position(0);return f;}static float[]color(Block b){switch(b){case GRASS:return new float[]{.28f,.72f,.18f};case DIRT:return new float[]{.48f,.30f,.13f};case STONE:return new float[]{.48f,.50f,.53f};case SAND:return new float[]{.86f,.73f,.43f};case WATER:return new float[]{.08f,.38f,.82f};case WOOD:return new float[]{.48f,.27f,.10f};case LEAVES:return new float[]{.18f,.55f,.16f};default:return new float[]{0,0,0};}}}
 }
